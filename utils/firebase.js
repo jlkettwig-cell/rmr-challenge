@@ -4,8 +4,11 @@ import { getAuth, GoogleAuthProvider } from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCB7PbK-zs30eFLmcrHUNXqAmBy5yBYpHY",
+
   authDomain: "rmrc-9bd98.firebaseapp.com",
+
   projectId: "rmrc-9bd98"
+
 };
 
 const app = initializeApp(firebaseConfig);
