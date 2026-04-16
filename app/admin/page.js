@@ -1,13 +1,13 @@
 "use client";
 
-import { signInWithPopup } from "firebase/auth";
+import { signInWithRedirect } from "firebase/auth";
 import { auth, provider } from "../../utils/firebase";
 
 const ADMIN_EMAIL = "jlkettwig@gmail.com";
 
 export default function Admin() {
   const login = async () => {
-    const res = await signInWithPopup(auth, provider);
+      await signInWithRedirect(auth, provider);
 
     if (res.user.email !== ADMIN_EMAIL) {
       alert("Kein Zugriff");
