@@ -1,8 +1,8 @@
 "use client";
 
+import { auth, provider } from "../../utils/firebase";
 import { signInWithRedirect, getRedirectResult } from "firebase/auth";
 import { useEffect } from "react";
-import { auth, provider } from "../../utils/firebase";
 
 const ADMIN_EMAIL = "jlkettwig@gmail.com";
 
@@ -32,9 +32,16 @@ export default function Admin() {
   }, []);
 
   const login = async () => {
-    console.log("LOGIN START");
+  console.log("LOGIN START");
+
+  try {
     await signInWithRedirect(auth, provider);
-  };
+    console.log("REDIRECT CALLED");
+  } catch (e) {
+    console.error("LOGIN ERROR", e);
+    alert(e.message);
+  }
+};
 
   return (
     <div style={{ padding: 40 }}>
