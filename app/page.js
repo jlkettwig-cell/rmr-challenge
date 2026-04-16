@@ -1,5 +1,6 @@
 "use client";
 
+import { onAuthStateChanged } from "firebase/auth";
 import { useEffect, useState } from "react";
 import { db, auth } from "../utils/firebase";
 import { doc, onSnapshot, setDoc } from "firebase/firestore";
@@ -13,8 +14,18 @@ export default function Home() {
   const [history, setHistory] = useState([]);
   const [user, setUser] = useState(null);
 
-  useEffect(() => {
-    auth.onAuthStateChanged(setUser);
+ useEffect(() => {
+  const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+    if (currentUser) {
+      console.log("USER LOGGED IN:", currentUser.email);
+      setUser(currentUser);
+    } else {
+      setUser(null);
+    }
+  });
+
+  return () => unsubscribe();
+}, []);
 
     const unsub = onSnapshot(doc(db, "leaderboard", "data"), (snap) => {
       if (snap.exists()) {
