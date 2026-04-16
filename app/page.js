@@ -19,26 +19,19 @@ export default function Home() {
 useEffect(() => {
   const initAuth = async () => {
     try {
-      // 🔥 WICHTIG: holt Redirect-Ergebnis
       const result = await getRedirectResult(auth);
 
       if (result?.user) {
-        console.log("REDIRECT LOGIN:", result.user.email);
+        console.log("REDIRECT USER:", result.user.email);
         setUser(result.user);
-        return;
       }
     } catch (e) {
       console.error("REDIRECT ERROR:", e);
     }
 
-    // 🔁 Fallback: normaler Auth Listener
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      if (currentUser) {
-        console.log("USER LOGGED IN:", currentUser.email);
-        setUser(currentUser);
-      } else {
-        setUser(null);
-      }
+      console.log("AUTH STATE:", currentUser?.email);
+      setUser(currentUser);
     });
 
     return () => unsubscribe();
