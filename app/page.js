@@ -14,7 +14,8 @@ export default function Home() {
   const [history, setHistory] = useState([]);
   const [user, setUser] = useState(null);
 
- useEffect(() => {
+ // 🔐 Auth State
+useEffect(() => {
   const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
     if (currentUser) {
       console.log("USER LOGGED IN:", currentUser.email);
@@ -27,15 +28,17 @@ export default function Home() {
   return () => unsubscribe();
 }, []);
 
-    const unsub = onSnapshot(doc(db, "leaderboard", "data"), (snap) => {
-      if (snap.exists()) {
-        setPlayers(snap.data().players || []);
-        setHistory(snap.data().history || []);
-      }
-    });
+// 🔄 Firestore Live Daten
+useEffect(() => {
+  const unsub = onSnapshot(doc(db, "leaderboard", "data"), (snap) => {
+    if (snap.exists()) {
+      setPlayers(snap.data().players || []);
+      setHistory(snap.data().history || []);
+    }
+  });
 
-    return () => unsub();
-  }, []);
+  return () => unsub();
+}, []);
 
   const isAdmin = user?.email === ADMIN_EMAIL;
 
