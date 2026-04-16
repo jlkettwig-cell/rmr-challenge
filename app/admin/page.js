@@ -32,7 +32,8 @@ export default function Admin() {
   }, []);
 
   const login = async () => {
-  console.log("LOGIN START");
+  console.log("LOGIN SUCCESS", result.user.email);
+alert(result.user.email);
 
   try {
     await signInWithRedirect(auth, provider);
