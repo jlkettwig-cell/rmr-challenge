@@ -1,6 +1,5 @@
 "use client";
 
-import { getRedirectResult } from "firebase/auth";
 import { onAuthStateChanged } from "firebase/auth";
 import { useEffect, useState } from "react";
 import { db, auth } from "../utils/firebase";
@@ -17,27 +16,17 @@ export default function Home() {
 
  // 🔐 Auth State
 useEffect(() => {
-  const initAuth = async () => {
-    try {
-      const result = await getRedirectResult(auth);
+  const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+    console.log("AUTH STATE:", currentUser?.email);
 
-      if (result?.user) {
-        console.log("REDIRECT USER:", result.user.email);
-        setUser(result.user);
-      }
-    } catch (e) {
-      console.error("REDIRECT ERROR:", e);
-    }
-
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      console.log("AUTH STATE:", currentUser?.email);
+    if (currentUser) {
       setUser(currentUser);
-    });
+    } else {
+      setUser(null);
+    }
+  });
 
-    return () => unsubscribe();
-  };
-
-  initAuth();
+  return () => unsubscribe();
 }, []);
 
 // 🔄 Firestore Live Daten
