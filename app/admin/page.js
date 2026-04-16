@@ -4,7 +4,7 @@ import { signInWithRedirect, getRedirectResult } from "firebase/auth";
 import { useEffect } from "react";
 import { auth, provider } from "../../utils/firebase";
 
-const ADMIN_EMAIL = "DEINE_EMAIL@gmail.com";
+const ADMIN_EMAIL = "jlkettwig@gmail.com";
 
 export default function Admin() {
 
