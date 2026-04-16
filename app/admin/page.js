@@ -21,7 +21,12 @@ export default function Admin() {
   return (
     <div style={{ padding: 40 }}>
       <h2>🔐 Admin Login</h2>
-      <button onClick={login}>Mit Google anmelden</button>
+      <button onClick={() => {
+  console.log("CLICK");
+  login();
+}}>
+  Mit Google anmelden
+</button>
     </div>
   );
 }
