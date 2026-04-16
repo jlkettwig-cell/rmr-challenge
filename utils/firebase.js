@@ -3,9 +3,9 @@ import { getFirestore } from "firebase/firestore";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyCkR8luE9c4lNwwORXLMJEsVYFN8iy5Tec",
-  authDomain: "rmr-challenge.firebaseapp.com",
-  projectId: "rmr-challenge"
+  apiKey: "AIzaSyCB7PbK-zs30eFLmcrHUNXqAmBy5yBYpHY",
+  authDomain: "rmrc-9bd98.firebaseapp.com",
+  projectId: "rmrc-9bd98"
 };
 
 const app = initializeApp(firebaseConfig);
