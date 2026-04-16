@@ -1,8 +1,8 @@
 "use client";
 
-import { auth, provider } from "../../utils/firebase";
-import { signInWithRedirect, getRedirectResult } from "firebase/auth";
+import { signInWithRedirect, getRedirectResult, signOut } from "firebase/auth";
 import { useEffect } from "react";
+import { auth, provider } from "../../utils/firebase";
 
 const ADMIN_EMAIL = "jlkettwig@gmail.com";
 
@@ -13,18 +13,20 @@ export default function Admin() {
       try {
         const result = await getRedirectResult(auth);
 
-        if (result?.user) {
-          console.log("LOGIN SUCCESS", result.user.email);
+        if (result && result.user) {
+          console.log("LOGIN EMAIL:", result.user.email);
 
-          if (result.user.email !== ADMIN_EMAIL) {
-            alert("Kein Zugriff");
-            await auth.signOut();
-          } else {
+          if (result.user.email === ADMIN_EMAIL) {
+            // ✅ Erfolg → zurück zur Hauptseite
             window.location.href = "/";
+          } else {
+            alert("Kein Zugriff: " + result.user.email);
+            await signOut(auth);
           }
         }
       } catch (e) {
-        console.error("LOGIN ERROR", e);
+        console.error("LOGIN ERROR:", e);
+        alert("Fehler beim Login: " + e.message);
       }
     };
 
@@ -32,17 +34,9 @@ export default function Admin() {
   }, []);
 
   const login = async () => {
-  console.log("LOGIN SUCCESS", result.user.email);
-alert(result.user.email);
-
-  try {
+    console.log("LOGIN START");
     await signInWithRedirect(auth, provider);
-    console.log("REDIRECT CALLED");
-  } catch (e) {
-    console.error("LOGIN ERROR", e);
-    alert(e.message);
-  }
-};
+  };
 
   return (
     <div style={{ padding: 40 }}>
