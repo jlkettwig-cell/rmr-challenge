@@ -19,6 +19,7 @@ export default function Home() {
   const [players, setPlayers] = useState([]);
   const [user, setUser] = useState(null);
   const [newName, setNewName] = useState("");
+  const [deleteIndex, setDeleteIndex] = useState(null); // 🔥 neu
 
   // 🔐 Auth
   useEffect(() => {
@@ -59,12 +60,20 @@ export default function Home() {
     setNewName("");
   };
 
-  // 🧹 Spieler löschen
-  const deletePlayer = async (index) => {
+  // 🧹 Modal öffnen
+  const confirmDelete = (index) => {
     if (!isAdmin) return;
+    setDeleteIndex(index);
+  };
 
-    const updated = players.filter((_, i) => i !== index);
+  // 🧹 Löschen ausführen
+  const handleDelete = async () => {
+    if (deleteIndex === null) return;
+
+    const updated = players.filter((_, i) => i !== deleteIndex);
     await save(updated);
+
+    setDeleteIndex(null);
   };
 
   // ✅ Checkbox toggle
@@ -78,7 +87,6 @@ export default function Home() {
   };
 
   const getScore = (p) => p.progress.filter(Boolean).length;
-
   const sorted = [...players].sort((a, b) => getScore(b) - getScore(a));
 
   return (
@@ -92,7 +100,6 @@ export default function Home() {
       <h1 style={{ marginBottom: 10 }}>🏆 Leaderboard</h1>
 
       {!user && <a href="/admin" style={{ color: "#f97316" }}>Login</a>}
-      {user && <p style={{ color: "#94a3b8" }}>{user.email}</p>}
 
       {/* ➕ Spieler hinzufügen */}
       {isAdmin && (
@@ -140,7 +147,7 @@ export default function Home() {
             {/* 🧹 Löschen */}
             {isAdmin && (
               <button
-                onClick={() => deletePlayer(i)}
+                onClick={() => confirmDelete(i)}
                 style={{
                   position: "absolute",
                   top: 10,
@@ -148,7 +155,8 @@ export default function Home() {
                   background: "transparent",
                   border: "none",
                   color: "#f87171",
-                  cursor: "pointer"
+                  cursor: "pointer",
+                  fontSize: 18
                 }}
               >
                 ✕
@@ -200,6 +208,69 @@ export default function Home() {
           </div>
         );
       })}
+
+      {/* 🪟 MODAL */}
+      {deleteIndex !== null && (
+        <div style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          width: "100%",
+          height: "100%",
+          background: "rgba(0,0,0,0.7)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          zIndex: 1000
+        }}>
+          <div style={{
+            background: "#1e293b",
+            padding: 20,
+            borderRadius: 16,
+            width: "90%",
+            maxWidth: 400,
+            textAlign: "center"
+          }}>
+            <h3 style={{ marginBottom: 10 }}>
+              Spieler löschen?
+            </h3>
+
+            <p style={{ marginBottom: 20, color: "#94a3b8" }}>
+              {players[deleteIndex]?.name}
+            </p>
+
+            <div style={{ display: "flex", gap: 10 }}>
+              <button
+                onClick={() => setDeleteIndex(null)}
+                style={{
+                  flex: 1,
+                  padding: 12,
+                  borderRadius: 10,
+                  background: "#334155",
+                  color: "white",
+                  border: "none"
+                }}
+              >
+                Abbrechen
+              </button>
+
+              <button
+                onClick={handleDelete}
+                style={{
+                  flex: 1,
+                  padding: 12,
+                  borderRadius: 10,
+                  background: "#ef4444",
+                  color: "white",
+                  border: "none"
+                }}
+              >
+                Löschen
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
