@@ -125,17 +125,23 @@ export default function Home() {
       {/* ➕ Spieler hinzufügen */}
       {isAdmin && (
         <div style={{ marginBottom: 20 }}>
-          <input
-            value={newName}
-            onChange={(e) => setNewName(e.target.value)}
-            placeholder="Neuer Teilnehmer"
-            style={{
-              padding: 12,
-              marginRight: 10,
-              borderRadius: 10,
-              border: "none"
-            }}
-          />
+          
+<input
+  value={newName}
+  onChange={(e) => setNewName(e.target.value)}
+  onKeyDown={(e) => {
+    if (e.key === "Enter") {
+      addPlayer();
+    }
+  }}
+  placeholder="Neuer Teilnehmer"
+  style={{
+    padding: 12,
+    marginRight: 10,
+    borderRadius: 10,
+    border: "none"
+  }}
+/>
           <button
             onClick={addPlayer}
             style={{
