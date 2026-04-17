@@ -118,10 +118,10 @@ useEffect(() => {
 
       <h2>📜 Verlauf</h2>
       {history.map((h, i) => (
-        <div key={i}>
-          {h.name} → {h.state} ({new Date(h.time).toLocaleString()})
-        </div>
-      ))}
+  <div key={i}>
+    {h.name} → {h.state}
+  </div>
+))}
     </div>
   );
 }
