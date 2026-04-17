@@ -17,11 +17,13 @@ export default function Home() {
  // 🔐 Auth State
 useEffect(() => {
   const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-    console.log("AUTH STATE:", currentUser?.email);
+    console.log("AUTH STATE:", currentUser);
 
     if (currentUser) {
+      console.log("EMAIL:", currentUser.email);
       setUser(currentUser);
     } else {
+      console.log("NO USER");
       setUser(null);
     }
   });
