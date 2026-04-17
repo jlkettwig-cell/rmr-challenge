@@ -10,11 +10,13 @@ const states = [
   "Salzburg","Steiermark","Tirol","Vorarlberg","Wien","Bayern"
 ];
 
-const ADMIN_EMAIL = "jlkettwig@gmail.com";
+// 👥 mehrere Admins
+const ADMIN_EMAILS = [
+  "jlkettwig@gmail.com"
+];
 
 export default function Home() {
   const [players, setPlayers] = useState([]);
-  const [history, setHistory] = useState([]);
   const [user, setUser] = useState(null);
   const [newName, setNewName] = useState("");
 
@@ -31,18 +33,16 @@ export default function Home() {
     const unsub = onSnapshot(doc(db, "leaderboard", "data"), (snap) => {
       if (snap.exists()) {
         setPlayers(snap.data().players || []);
-        setHistory(snap.data().history || []);
       }
     });
     return () => unsub();
   }, []);
 
-  const isAdmin = user?.email === ADMIN_EMAIL;
+  const isAdmin = ADMIN_EMAILS.includes(user?.email);
 
-  const save = async (playersData, historyData) => {
+  const save = async (playersData) => {
     await setDoc(doc(db, "leaderboard", "data"), {
-      players: playersData,
-      history: historyData
+      players: playersData
     });
   };
 
@@ -55,8 +55,16 @@ export default function Home() {
       progress: Array(states.length).fill(false)
     };
 
-    await save([...players, newPlayer], history);
+    await save([...players, newPlayer]);
     setNewName("");
+  };
+
+  // 🧹 Spieler löschen
+  const deletePlayer = async (index) => {
+    if (!isAdmin) return;
+
+    const updated = players.filter((_, i) => i !== index);
+    await save(updated);
   };
 
   // ✅ Checkbox toggle
@@ -64,25 +72,13 @@ export default function Home() {
     if (!isAdmin) return;
 
     const copy = [...players];
-    const wasChecked = copy[i].progress[j];
-    copy[i].progress[j] = !wasChecked;
+    copy[i].progress[j] = !copy[i].progress[j];
 
-    let newHistory = history;
-
-    if (!wasChecked) {
-      newHistory = [
-        {
-          name: copy[i].name || "Unbekannt",
-          state: states[j]
-        },
-        ...history
-      ];
-    }
-
-    save(copy, newHistory);
+    save(copy);
   };
 
   const getScore = (p) => p.progress.filter(Boolean).length;
+
   const sorted = [...players].sort((a, b) => getScore(b) - getScore(a));
 
   return (
@@ -131,20 +127,55 @@ export default function Home() {
       {sorted.map((p, i) => {
         const score = getScore(p);
         const done = score === states.length;
+        const percent = (score / states.length) * 100;
 
         return (
           <div key={i} style={{
             background: done ? "#facc15" : "#1e293b",
             padding: 15,
             marginBottom: 12,
-            borderRadius: 16
+            borderRadius: 16,
+            position: "relative"
           }}>
-            <div style={{ fontSize: 18, marginBottom: 8 }}>
+            {/* 🧹 Löschen */}
+            {isAdmin && (
+              <button
+                onClick={() => deletePlayer(i)}
+                style={{
+                  position: "absolute",
+                  top: 10,
+                  right: 10,
+                  background: "transparent",
+                  border: "none",
+                  color: "#f87171",
+                  cursor: "pointer"
+                }}
+              >
+                ✕
+              </button>
+            )}
+
+            <div style={{ fontSize: 18, marginBottom: 6 }}>
               {done && "👑 "} {p.name}
             </div>
 
             <div style={{ marginBottom: 8 }}>
               {score}/{states.length}
+            </div>
+
+            {/* 📊 Fortschrittsbalken */}
+            <div style={{
+              height: 8,
+              background: "#334155",
+              borderRadius: 10,
+              marginBottom: 10
+            }}>
+              <div style={{
+                width: `${percent}%`,
+                height: "100%",
+                background: "#22c55e",
+                borderRadius: 10
+              }} />
             </div>
 
             <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
@@ -169,14 +200,6 @@ export default function Home() {
           </div>
         );
       })}
-
-      {/* 📜 Verlauf */}
-      <h2 style={{ marginTop: 30 }}>📜 Verlauf</h2>
-      {history.map((h, i) => (
-        <div key={i} style={{ color: "#94a3b8" }}>
-          {h.name} → {h.state}
-        </div>
-      ))}
     </div>
   );
 }
