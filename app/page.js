@@ -19,7 +19,10 @@ export default function Home() {
   const [players, setPlayers] = useState([]);
   const [user, setUser] = useState(null);
   const [newName, setNewName] = useState("");
-  const [deleteIndex, setDeleteIndex] = useState(null); // 🔥 neu
+
+  const [deleteIndex, setDeleteIndex] = useState(null);
+  const [expandedIndex, setExpandedIndex] = useState(null);
+  const [isMobile, setIsMobile] = useState(false);
 
   // 🔐 Auth
   useEffect(() => {
@@ -27,6 +30,18 @@ export default function Home() {
       setUser(currentUser);
     });
     return () => unsubscribe();
+  }, []);
+
+  // 📱 Mobile erkennen
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+
+    return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
   // 🔄 Firestore
@@ -58,6 +73,12 @@ export default function Home() {
 
     await save([...players, newPlayer]);
     setNewName("");
+  };
+
+  // 📱 Expand / Collapse
+  const toggleExpand = (i) => {
+    if (!isMobile) return;
+    setExpandedIndex(expandedIndex === i ? null : i);
   };
 
   // 🧹 Modal öffnen
@@ -135,6 +156,7 @@ export default function Home() {
         const score = getScore(p);
         const done = score === states.length;
         const percent = (score / states.length) * 100;
+        const isOpen = isMobile ? expandedIndex === i : true;
 
         return (
           <div key={i} style={{
@@ -144,66 +166,96 @@ export default function Home() {
             borderRadius: 16,
             position: "relative"
           }}>
-            {/* 🧹 Löschen */}
-            {isAdmin && (
-              <button
-                onClick={() => confirmDelete(i)}
-                style={{
-                  position: "absolute",
-                  top: 10,
-                  right: 10,
-                  background: "transparent",
-                  border: "none",
-                  color: "#f87171",
-                  cursor: "pointer",
-                  fontSize: 18
-                }}
-              >
-                ✕
-              </button>
-            )}
+            {/* Klickbereich */}
+            <div
+              onClick={() => toggleExpand(i)}
+              style={{ cursor: isMobile ? "pointer" : "default" }}
+            >
+              <div style={{ fontSize: 18 }}>
+                {done && "👑 "} {p.name}
 
-            <div style={{ fontSize: 18, marginBottom: 6 }}>
-              {done && "👑 "} {p.name}
-            </div>
+                {/* 🔽 Pfeil */}
+                {isMobile && (
+                  <span style={{ float: "right" }}>
+                    {isOpen ? "▲" : "▼"}
+                  </span>
+                )}
+              </div>
 
-            <div style={{ marginBottom: 8 }}>
-              {score}/{states.length}
-            </div>
+              <div style={{ marginBottom: 8 }}>
+                {score}/{states.length}
+              </div>
 
-            {/* 📊 Fortschrittsbalken */}
-            <div style={{
-              height: 8,
-              background: "#334155",
-              borderRadius: 10,
-              marginBottom: 10
-            }}>
+              {/* Fortschrittsbalken */}
               <div style={{
-                width: `${percent}%`,
-                height: "100%",
-                background: "#22c55e",
+                height: 8,
+                background: "#334155",
                 borderRadius: 10
-              }} />
+              }}>
+                <div style={{
+                  width: `${percent}%`,
+                  height: "100%",
+                  background: "#22c55e",
+                  borderRadius: 10,
+                  transition: "width 0.3s ease"
+                }} />
+              </div>
             </div>
 
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-              {states.map((s, j) => (
-                <label key={j} style={{
-                  background: p.progress[j] ? "#22c55e" : "#334155",
-                  padding: "6px 10px",
-                  borderRadius: 8,
-                  fontSize: 12
-                }}>
-                  <input
-                    type="checkbox"
-                    checked={p.progress[j]}
-                    disabled={!isAdmin}
-                    onChange={() => toggle(i, j)}
-                    style={{ marginRight: 5 }}
-                  />
-                  {s}
-                </label>
-              ))}
+            {/* Details */}
+            <div style={{
+              maxHeight: isOpen ? 500 : 0,
+              overflow: "hidden",
+              transition: "all 0.3s ease"
+            }}>
+              <div style={{ marginTop: 10 }}>
+
+                {/* 🧹 Löschen */}
+                {isAdmin && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      confirmDelete(i);
+                    }}
+                    style={{
+                      position: "absolute",
+                      top: 10,
+                      right: 10,
+                      background: "transparent",
+                      border: "none",
+                      color: "#f87171",
+                      cursor: "pointer",
+                      fontSize: 18
+                    }}
+                  >
+                    ✕
+                  </button>
+                )}
+
+                {/* Checkboxen */}
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                  {states.map((s, j) => (
+                    <label key={j} style={{
+                      background: p.progress[j] ? "#22c55e" : "#334155",
+                      padding: "6px 10px",
+                      borderRadius: 8,
+                      fontSize: 12
+                    }}>
+                      <input
+                        type="checkbox"
+                        checked={p.progress[j]}
+                        disabled={!isAdmin}
+                        onChange={(e) => {
+                          e.stopPropagation();
+                          toggle(i, j);
+                        }}
+                        style={{ marginRight: 5 }}
+                      />
+                      {s}
+                    </label>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
         );
