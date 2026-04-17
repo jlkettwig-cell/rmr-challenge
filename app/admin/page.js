@@ -1,6 +1,6 @@
 "use client";
 
-import { signInWithPopup } from "firebase/auth";
+import { signInWithPopup, onAuthStateChanged } from "firebase/auth";
 import { useEffect } from "react";
 import { auth, provider } from "../../utils/firebase";
 
