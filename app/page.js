@@ -118,7 +118,7 @@ export default function Home() {
       color: "white",
       fontFamily: "Arial"
     }}>
-      <h1 style={{ marginBottom: 10 }}>🏆 Leaderboard</h1>
+      <h1 style={{ marginBottom: 10 }}>🏆 Richimountain Runners Challenge</h1>
 
       {!user && <a href="/admin" style={{ color: "#f97316" }}>Login</a>}
 
