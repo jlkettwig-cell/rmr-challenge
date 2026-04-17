@@ -128,7 +128,7 @@ export default function Home() {
           <input
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
-            placeholder="Neuer Spieler"
+            placeholder="Neuer Teilnehmer"
             style={{
               padding: 12,
               marginRight: 10,
@@ -176,10 +176,14 @@ export default function Home() {
 
                 {/* 🔽 Pfeil */}
                 {isMobile && (
-                  <span style={{ float: "right" }}>
-                    {isOpen ? "▲" : "▼"}
-                  </span>
-                )}
+  <span style={{
+    float: "right",
+    marginRight: isAdmin ? 30 : 0, // 🔥 Platz für ❌
+    fontSize: 14
+  }}>
+    {isOpen ? "▲" : "▼"}
+  </span>
+)}
               </div>
 
               <div style={{ marginBottom: 8 }}>
@@ -220,7 +224,8 @@ export default function Home() {
                     style={{
                       position: "absolute",
                       top: 10,
-                      right: 10,
+                      right: 5,
+                      top: 8,
                       background: "transparent",
                       border: "none",
                       color: "#f87171",
