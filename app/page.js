@@ -45,10 +45,10 @@ export default function Home() {
     return () => window.removeEventListener("resize", check);
   }, []);
 
-  // 🔄 Firestore (NEU!)
+  // 🔄 Firestore (FIXED)
   useEffect(() => {
     const unsub = onSnapshot(
-      collection(db, "leaderboard", "players"),
+      collection(db, "players"), // ✅ FIX
       (snapshot) => {
         const list = snapshot.docs.map(doc => ({
           id: doc.id,
@@ -82,7 +82,7 @@ export default function Home() {
     const newId = crypto.randomUUID();
 
     await setDoc(
-      doc(db, "leaderboard", "players", newId),
+      doc(db, "players", newId), // ✅ FIX
       {
         name: newName,
         progress: Array(states.length).fill(false)
@@ -116,7 +116,7 @@ export default function Home() {
     }
 
     await setDoc(
-      doc(db, "leaderboard", "players", editingId),
+      doc(db, "players", editingId), // ✅ FIX
       { name: editName },
       { merge: true }
     );
@@ -147,7 +147,7 @@ export default function Home() {
     if (!deleteId) return;
 
     await deleteDoc(
-      doc(db, "leaderboard", "players", deleteId)
+      doc(db, "players", deleteId) // ✅ FIX
     );
 
     setDeleteId(null);
@@ -164,7 +164,7 @@ export default function Home() {
     newProgress[j] = !newProgress[j];
 
     await setDoc(
-      doc(db, "leaderboard", "players", id),
+      doc(db, "players", id), // ✅ FIX
       { progress: newProgress },
       { merge: true }
     );
