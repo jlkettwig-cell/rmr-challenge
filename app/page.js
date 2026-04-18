@@ -125,6 +125,12 @@ export default function Home() {
     setEditName("");
   };
 
+  // 📱 Expand
+  const toggleExpand = (id) => {
+    if (!isMobile) return;
+    setExpandedId(expandedId === id ? null : id);
+  };
+
   // 🧹 Delete
   const confirmDelete = (id) => {
     if (!isAdmin) return;
@@ -200,7 +206,7 @@ export default function Home() {
           <button
             onClick={async () => {
               await signOut(auth);
-              window.location.href = "/"; // 🔥 zurück zur Startseite
+              window.location.href = "/";
             }}
             style={{
               padding: "8px 14px",
@@ -250,6 +256,7 @@ export default function Home() {
         const score = getScore(p);
         const percent = Math.round((score / states.length) * 100);
         const done = score === states.length;
+        const isOpen = isMobile ? expandedId === p.id : true;
 
         return (
           <div key={p.id} style={{
@@ -261,6 +268,7 @@ export default function Home() {
             position: "relative"
           }}>
 
+            {/* Delete */}
             {isAdmin && (
               <button
                 onClick={() => confirmDelete(p.id)}
@@ -277,11 +285,31 @@ export default function Home() {
               </button>
             )}
 
-            <div>
-              {done && "👑 "}
-              {p.name} • {score}/{states.length}
+            {/* Header + Pfeil */}
+            <div style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center"
+            }}>
+              <div>
+                {done && "👑 "}
+                {p.name} • {score}/{states.length}
+              </div>
+
+              {isMobile && (
+                <span
+                  onClick={() => toggleExpand(p.id)}
+                  style={{
+                    marginRight: isAdmin ? 30 : 0,
+                    cursor: "pointer"
+                  }}
+                >
+                  {isOpen ? "▲" : "▼"}
+                </span>
+              )}
             </div>
 
+            {/* Progress */}
             <div style={{
               height: 8,
               background: "#334155",
@@ -296,26 +324,41 @@ export default function Home() {
               }} />
             </div>
 
-            <div style={{ marginTop: 8 }}>
-              {states.map((s, j) => (
-                <label key={j} style={{
-                  marginRight: 8,
-                  background: p.progress[j] ? "#22c55e" : "#334155",
-                  padding: "4px 8px",
-                  borderRadius: 6,
-                  color: p.progress[j] ? "black" : "white"
-                }}>
-                  <input
-                    type="checkbox"
-                    checked={p.progress[j]}
-                    disabled={!isAdmin}
-                    style={{ marginRight: 4, accentColor: "#22c55e" }}
-                    onChange={() => toggle(p.id, j)}
-                  />
-                  {s}
-                </label>
-              ))}
-            </div>
+            {/* States */}
+            {isOpen && (
+              <div style={{
+                marginTop: 8,
+                display: "flex",
+                flexWrap: "wrap",
+                gap: 8
+              }}>
+                {states.map((s, j) => (
+                  <label
+                    key={j}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      whiteSpace: "nowrap",
+                      background: p.progress[j] ? "#22c55e" : "#334155",
+                      padding: "6px 10px",
+                      borderRadius: 999,
+                      fontSize: 12,
+                      color: p.progress[j] ? "black" : "white",
+                      gap: 6
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={p.progress[j]}
+                      disabled={!isAdmin}
+                      style={{ accentColor: "#22c55e", flexShrink: 0 }}
+                      onChange={() => toggle(p.id, j)}
+                    />
+                    {s}
+                  </label>
+                ))}
+              </div>
+            )}
           </div>
         );
       })}
