@@ -20,6 +20,9 @@ export default function Home() {
   const [user, setUser] = useState(null);
   const [newName, setNewName] = useState("");
 
+const [editingId, setEditingId] = useState(null);
+const [editName, setEditName] = useState("");
+
   const [deleteIndex, setDeleteIndex] = useState(null);
   const [expandedIndex, setExpandedIndex] = useState(null);
   const [isMobile, setIsMobile] = useState(false);
@@ -45,28 +48,30 @@ export default function Home() {
   }, []);
 
   // 🔄 Firestore
-  useEffect(() => {
-    const unsub = onSnapshot(doc(db, "leaderboard", "data"), (snap) => {
-      if (snap.exists()) {
-        setPlayers(snap.data().players || []);
-      }
-    });
-    return () => unsub();
-  }, []);
+useEffect(() => {
+  const unsub = onSnapshot(doc(db, "leaderboard", "data"), (snap) => {
+    if (snap.exists()) {
+      setPlayers(snap.data().players || []);
+    }
+  });
+  return () => unsub();
+}, []);
 
-  const isAdmin = ADMIN_EMAILS.includes(user?.email);
+// 🔧 NEU: Expand zurücksetzen bei Änderungen
+useEffect(() => {
+  setExpandedIndex(null);
+}, [players]);
 
-  const save = async (playersData) => {
-   await setDoc(
-  doc(db, "leaderboard", "data"),
-  { players: playersData },
-  { merge: true }
-);
-  };
+const isAdmin = ADMIN_EMAILS.includes(user?.email);
 
   // ➕ Spieler hinzufügen
   const addPlayer = async () => {
     if (!newName.trim()) return;
+
+if (players.some(p => p.name.toLowerCase() === newName.toLowerCase())) {
+  alert("Spieler existiert bereits");
+  return;
+}
 
     const newPlayer = {
   id: crypto.randomUUID(), // 🔥 eindeutige ID
@@ -84,18 +89,16 @@ export default function Home() {
     setExpandedIndex(expandedIndex === i ? null : i);
   };
 
-  // 🧹 Modal öffnen
-  const confirmDelete = (index) => {
-    if (!isAdmin) return;
-    setDeleteIndex(index);
-  };
-
-  // 🧹 Löschen ausführen
-  const confirmDelete = (playerId) => {
+ // 🧹 Modal öffnen
+const confirmDelete = (playerId) => {
+  if (!isAdmin) return;
   setDeleteIndex(playerId);
 };
 
+// 🧹 Löschen ausführen
 const handleDelete = async () => {
+  if (!deleteIndex) return; // 🔥 Mini-Verbesserung
+
   const updated = players.filter(p => p.id !== deleteIndex);
   await save(updated);
   setDeleteIndex(null);
@@ -117,8 +120,16 @@ const handleDelete = async () => {
   save(updated);
 };
 
-  const getScore = (p) => p.progress.filter(Boolean).length;
-  const sorted = [...players].sort((a, b) => getScore(b) - getScore(a));
+  const getScore = (p) => {
+  if (!p.progress || !Array.isArray(p.progress)) return 0;
+  return p.progress.filter(Boolean).length;
+};
+  const sorted = [...players].sort((a, b) => {
+  const diff = getScore(b) - getScore(a);
+  if (diff !== 0) return diff;
+
+  return a.name.localeCompare(b.name);
+});
 
   const totalPlayers = players.length;
 
@@ -161,7 +172,7 @@ const handleDelete = async () => {
   onKeyDown={(e) => {
     if (e.key === "Enter") {
       addPlayer();
-      e.target.blur(); // optional: Tastatur schließen (mobile)
+      e.target.blur(); // Tastatur verschwindet (mobile)
     }
   }}
   placeholder="Neuer Teilnehmer"
