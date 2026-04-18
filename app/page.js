@@ -259,8 +259,9 @@ export default function Home() {
             marginBottom: 12,
             padding: 10,
             borderRadius: 10,
-            background: done ? "#facc15" : "#1e293b",
-            color: done ? "#000" : "white",
+            background: "#1e293b",
+color: "white",
+border: done ? "2px solid #eab308" : "none",
             position: "relative"
           }}>
 
@@ -317,8 +318,13 @@ export default function Home() {
                     }}
                     style={{ cursor: isAdmin ? "pointer" : "default" }}
                   >
-                    {done && "👑 "}
-                    {p.name} • {score}/{states.length}
+                    <span style={{
+  color: done ? "#facc15" : "white",
+  fontWeight: done ? "bold" : "normal"
+}}>
+  {done && "👑 "}
+  {p.name} • {score}/{states.length}
+</span>
                   </span>
                 )}
               </div>
