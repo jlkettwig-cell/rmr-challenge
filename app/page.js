@@ -132,6 +132,7 @@ export default function Home() {
   onKeyDown={(e) => {
     if (e.key === "Enter") {
       addPlayer();
+      e.target.blur(); // optional: Tastatur schließen (mobile)
     }
   }}
   placeholder="Neuer Teilnehmer"
