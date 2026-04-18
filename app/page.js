@@ -45,10 +45,10 @@ export default function Home() {
     return () => window.removeEventListener("resize", check);
   }, []);
 
-  // 🔄 Firestore (FIXED)
+  // 🔄 Firestore
   useEffect(() => {
     const unsub = onSnapshot(
-      collection(db, "players"), // ✅ FIX
+      collection(db, "players"),
       (snapshot) => {
         const list = snapshot.docs.map(doc => ({
           id: doc.id,
@@ -69,6 +69,8 @@ export default function Home() {
 
   // ➕ Teilnehmer hinzufügen
   const addPlayer = async () => {
+    if (!isAdmin) return;
+
     if (!newName.trim()) {
       alert("Bitte Namen eingeben");
       return;
@@ -81,26 +83,23 @@ export default function Home() {
 
     const newId = crypto.randomUUID();
 
-    await setDoc(
-      doc(db, "players", newId), // ✅ FIX
-      {
-        name: newName,
-        progress: Array(states.length).fill(false)
-      }
-    );
+    await setDoc(doc(db, "players", newId), {
+      name: newName,
+      progress: Array(states.length).fill(false)
+    });
 
     setNewName("");
   };
 
-  // ✏️ Edit starten
+  // ✏️ Edit
   const startEdit = (p) => {
     if (!isAdmin) return;
     setEditingId(p.id);
     setEditName(p.name);
   };
 
-  // 💾 Edit speichern
   const saveEdit = async () => {
+    if (!isAdmin) return;
     if (isSaving) return;
     if (!editName.trim()) return;
 
@@ -116,7 +115,7 @@ export default function Home() {
     }
 
     await setDoc(
-      doc(db, "players", editingId), // ✅ FIX
+      doc(db, "players", editingId),
       { name: editName },
       { merge: true }
     );
@@ -144,12 +143,10 @@ export default function Home() {
   };
 
   const handleDelete = async () => {
+    if (!isAdmin) return;
     if (!deleteId) return;
 
-    await deleteDoc(
-      doc(db, "players", deleteId) // ✅ FIX
-    );
-
+    await deleteDoc(doc(db, "players", deleteId));
     setDeleteId(null);
   };
 
@@ -164,7 +161,7 @@ export default function Home() {
     newProgress[j] = !newProgress[j];
 
     await setDoc(
-      doc(db, "players", id), // ✅ FIX
+      doc(db, "players", id),
       { progress: newProgress },
       { merge: true }
     );
@@ -197,6 +194,19 @@ export default function Home() {
     }}>
       <h1>🏆 Richimountain Runners Challenge</h1>
 
+      {/* Login Status */}
+      <div style={{ textAlign: "center", marginBottom: 10 }}>
+        {user ? (
+          <div>
+            {user.email}
+            {isAdmin && <span style={{ color: "#facc15" }}> 👑 Admin</span>}
+          </div>
+        ) : (
+          <div style={{ color: "#f87171" }}>❌ Nicht eingeloggt</div>
+        )}
+      </div>
+
+      {/* Stats */}
       <div style={{ display: "flex", justifyContent: "center", gap: 30 }}>
         <div>👥 {totalPlayers}</div>
         <div>🏁 {finishedPlayers}</div>
@@ -204,6 +214,7 @@ export default function Home() {
 
       {!user && <a href="/admin">Login</a>}
 
+      {/* Add */}
       {isAdmin && (
         <div>
           <input
@@ -221,19 +232,24 @@ export default function Home() {
         </div>
       )}
 
+      {/* Liste */}
       {sorted.map((p) => {
         const score = getScore(p);
         const percent = Math.round((score / states.length) * 100);
+        const done = score === states.length;
         const isOpen = isMobile ? expandedId === p.id : true;
 
         return (
           <div key={p.id} style={{
             marginBottom: 12,
-            position: "relative",
             padding: 10,
-            background: "#1e293b",
-            borderRadius: 10
+            borderRadius: 10,
+            background: done ? "#facc15" : "#1e293b",
+            color: done ? "#000" : "white",
+            position: "relative"
           }}>
+
+            {/* Delete */}
             {isAdmin && (
               <button
                 onClick={() => confirmDelete(p.id)}
@@ -250,6 +266,7 @@ export default function Home() {
               </button>
             )}
 
+            {/* Header */}
             <div style={{ display: "flex", justifyContent: "space-between" }}>
               {editingId === p.id ? (
                 <input
@@ -257,22 +274,15 @@ export default function Home() {
                   autoFocus
                   onChange={(e) => setEditName(e.target.value)}
                   onKeyDown={(e) => {
-                    e.stopPropagation();
                     if (e.key === "Enter") saveEdit();
                     if (e.key === "Escape") cancelEdit();
                   }}
-                  onBlur={() => {
-                    if (editingId === p.id && editName.trim() && !isSaving) {
-                      saveEdit();
-                    }
-                  }}
+                  onBlur={saveEdit}
                 />
               ) : (
-                <span onClick={(e) => {
-                  e.stopPropagation();
-                  startEdit(p);
-                }}>
-                  {p.name} • {score}/{states.length} ({percent}%)
+                <span onClick={() => startEdit(p)}>
+                  {done && "👑 "}
+                  {p.name} • {score}/{states.length}
                 </span>
               )}
 
@@ -283,18 +293,38 @@ export default function Home() {
               )}
             </div>
 
+            {/* Fortschrittsbalken */}
+            <div style={{
+              height: 8,
+              background: "#334155",
+              borderRadius: 10,
+              marginTop: 6
+            }}>
+              <div style={{
+                width: `${percent}%`,
+                height: "100%",
+                background: done ? "#eab308" : "#22c55e",
+                borderRadius: 10
+              }} />
+            </div>
+
+            {/* Checkboxen */}
             {isOpen && (
-              <div>
+              <div style={{ marginTop: 8 }}>
                 {states.map((s, j) => (
-                  <label key={j} style={{ marginRight: 8 }}>
+                  <label key={j} style={{
+                    marginRight: 8,
+                    background: p.progress[j] ? "#22c55e" : "#334155",
+                    padding: "4px 8px",
+                    borderRadius: 6,
+                    color: p.progress[j] ? "black" : "white"
+                  }}>
                     <input
                       type="checkbox"
                       checked={p.progress[j]}
                       disabled={!isAdmin}
-                      onChange={(e) => {
-                        e.stopPropagation();
-                        toggle(p.id, j);
-                      }}
+                      style={{ marginRight: 4, accentColor: "#22c55e" }}
+                      onChange={() => toggle(p.id, j)}
                     />
                     {s}
                   </label>
@@ -304,14 +334,6 @@ export default function Home() {
           </div>
         );
       })}
-
-      {deleteId && (
-        <div>
-          <p>{players.find(p => p.id === deleteId)?.name}</p>
-          <button onClick={() => setDeleteId(null)}>Abbrechen</button>
-          <button onClick={handleDelete}>Löschen</button>
-        </div>
-      )}
     </div>
   );
 }
