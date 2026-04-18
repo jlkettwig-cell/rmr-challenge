@@ -189,16 +189,12 @@ export default function Home() {
       <h1>🏆 Richimountain Runners Challenge</h1>
 
       {/* Status */}
-      <div style={{ textAlign: "center", marginBottom: 10 }}>
-        {user ? (
-          <div>
-            {user.email}
-            {isAdmin && <span style={{ color: "#facc15" }}> 👑 Admin</span>}
-          </div>
-        ) : (
-          <div style={{ color: "#94a3b8" }}>Statistik</div>
-        )}
-      </div>
+      {user && (
+        <div style={{ textAlign: "center", marginBottom: 10 }}>
+          {user.email}
+          {isAdmin && <span style={{ color: "#facc15" }}> 👑 Admin</span>}
+        </div>
+      )}
 
       {/* Logout */}
       {user && (
@@ -285,15 +281,46 @@ export default function Home() {
               </button>
             )}
 
-            {/* Header + Pfeil */}
+            {/* Header */}
             <div style={{
               display: "flex",
               justifyContent: "space-between",
               alignItems: "center"
             }}>
               <div>
-                {done && "👑 "}
-                {p.name} • {score}/{states.length}
+                {editingId === p.id ? (
+                  <input
+                    value={editName}
+                    autoFocus
+                    onChange={(e) => setEditName(e.target.value)}
+                    onKeyDown={(e) => {
+                      e.stopPropagation();
+                      if (e.key === "Enter") saveEdit();
+                      if (e.key === "Escape") cancelEdit();
+                    }}
+                    onBlur={() => {
+                      if (editingId === p.id && editName.trim() && !isSaving) {
+                        saveEdit();
+                      }
+                    }}
+                    style={{
+                      padding: "4px 6px",
+                      borderRadius: 6,
+                      border: "none"
+                    }}
+                  />
+                ) : (
+                  <span
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      startEdit(p);
+                    }}
+                    style={{ cursor: isAdmin ? "pointer" : "default" }}
+                  >
+                    {done && "👑 "}
+                    {p.name} • {score}/{states.length}
+                  </span>
+                )}
               </div>
 
               {isMobile && (
@@ -362,6 +389,67 @@ export default function Home() {
           </div>
         );
       })}
+
+      {/* DELETE MODAL */}
+      {deleteId && (
+        <div style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          width: "100%",
+          height: "100%",
+          background: "rgba(0,0,0,0.7)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          zIndex: 1000
+        }}>
+          <div style={{
+            background: "#1e293b",
+            padding: 20,
+            borderRadius: 16,
+            width: "90%",
+            maxWidth: 400,
+            textAlign: "center"
+          }}>
+            <h3>Spieler löschen?</h3>
+
+            <p style={{ margin: "10px 0", color: "#94a3b8" }}>
+              {players.find(p => p.id === deleteId)?.name}
+            </p>
+
+            <div style={{ display: "flex", gap: 10 }}>
+              <button
+                onClick={() => setDeleteId(null)}
+                style={{
+                  flex: 1,
+                  padding: 10,
+                  background: "#334155",
+                  color: "white",
+                  border: "none",
+                  borderRadius: 8
+                }}
+              >
+                Abbrechen
+              </button>
+
+              <button
+                onClick={handleDelete}
+                style={{
+                  flex: 1,
+                  padding: 10,
+                  background: "#ef4444",
+                  color: "white",
+                  border: "none",
+                  borderRadius: 8
+                }}
+              >
+                Löschen
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
