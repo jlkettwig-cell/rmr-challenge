@@ -10,7 +10,6 @@ import {
   setDoc,
   deleteDoc
 } from "firebase/firestore";
-import { useRouter } from "next/navigation";
 
 const states = [
   "Burgenland","Kärnten","Niederösterreich","Oberösterreich",
@@ -48,16 +47,13 @@ export default function Home() {
 
   // 🔄 Firestore
   useEffect(() => {
-    const unsub = onSnapshot(
-      collection(db, "players"),
-      (snapshot) => {
-        const list = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        }));
-        setPlayers(list);
-      }
-    );
+    const unsub = onSnapshot(collection(db, "players"), (snapshot) => {
+      const list = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setPlayers(list);
+    });
 
     return () => unsub();
   }, []);
@@ -68,7 +64,7 @@ export default function Home() {
 
   const isAdmin = ADMIN_EMAILS.includes(user?.email);
 
-  // ➕ Teilnehmer hinzufügen
+  // ➕ Add
   const addPlayer = async () => {
     if (!isAdmin) return;
 
@@ -100,9 +96,7 @@ export default function Home() {
   };
 
   const saveEdit = async () => {
-    if (!isAdmin) return;
-    if (isSaving) return;
-    if (!editName.trim()) return;
+    if (!isAdmin || isSaving || !editName.trim()) return;
 
     setIsSaving(true);
 
@@ -131,12 +125,6 @@ export default function Home() {
     setEditName("");
   };
 
-  // 📱 Expand
-  const toggleExpand = (id) => {
-    if (!isMobile) return;
-    setExpandedId(expandedId === id ? null : id);
-  };
-
   // 🧹 Delete
   const confirmDelete = (id) => {
     if (!isAdmin) return;
@@ -144,14 +132,13 @@ export default function Home() {
   };
 
   const handleDelete = async () => {
-    if (!isAdmin) return;
-    if (!deleteId) return;
+    if (!isAdmin || !deleteId) return;
 
     await deleteDoc(doc(db, "players", deleteId));
     setDeleteId(null);
   };
 
-  // ✅ Fortschritt
+  // ✅ Progress
   const toggle = async (id, j) => {
     if (!isAdmin) return;
 
@@ -195,7 +182,7 @@ export default function Home() {
     }}>
       <h1>🏆 Richimountain Runners Challenge</h1>
 
-      {/* Login Status */}
+      {/* Status */}
       <div style={{ textAlign: "center", marginBottom: 10 }}>
         {user ? (
           <div>
@@ -203,48 +190,54 @@ export default function Home() {
             {isAdmin && <span style={{ color: "#facc15" }}> 👑 Admin</span>}
           </div>
         ) : (
- {/* Nicht eingeloggt */}          
-<div style={{ color: "white" }}>Statistik</div>
+          <div style={{ color: "#94a3b8" }}>Statistik</div>
         )}
       </div>
-{user && (
-  <div style={{ textAlign: "center", marginBottom: 15 }}>
-    <button
-      onClick={() => signOut(auth)}
-      style={{
-        padding: "8px 14px",
-        borderRadius: 8,
-        border: "none",
-        background: "#ef4444",
-        color: "white",
-        cursor: "pointer"
-      }}
-    >
-      🚪 Logout
-    </button>
-  </div>
-)}
+
+      {/* Logout */}
+      {user && (
+        <div style={{ textAlign: "center", marginBottom: 15 }}>
+          <button
+            onClick={async () => {
+              await signOut(auth);
+              window.location.href = "/admin"; // ✅ sicher
+            }}
+            style={{
+              padding: "8px 14px",
+              borderRadius: 8,
+              border: "none",
+              background: "#ef4444",
+              color: "white",
+              cursor: "pointer"
+            }}
+          >
+            🚪 Logout
+          </button>
+        </div>
+      )}
 
       {/* Stats */}
       <div style={{ display: "flex", justifyContent: "center", gap: 30 }}>
         <div>👥 {totalPlayers}</div>
         <div>🏁 {finishedPlayers}</div>
-      {!user && <a href="/admin">Login</a>}
       </div>
 
-
+      {!user && (
+        <div style={{ textAlign: "center", marginTop: 10 }}>
+          <a href="/admin" style={{ color: "#f97316" }}>
+            🔐 Login
+          </a>
+        </div>
+      )}
 
       {/* Add */}
       {isAdmin && (
-        <div>
+        <div style={{ marginTop: 10 }}>
           <input
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                addPlayer();
-                e.target.blur();
-              }
+              if (e.key === "Enter") addPlayer();
             }}
             placeholder="Neuer Teilnehmer"
           />
@@ -257,7 +250,6 @@ export default function Home() {
         const score = getScore(p);
         const percent = Math.round((score / states.length) * 100);
         const done = score === states.length;
-        const isOpen = isMobile ? expandedId === p.id : true;
 
         return (
           <div key={p.id} style={{
@@ -269,7 +261,6 @@ export default function Home() {
             position: "relative"
           }}>
 
-            {/* Delete */}
             {isAdmin && (
               <button
                 onClick={() => confirmDelete(p.id)}
@@ -286,34 +277,11 @@ export default function Home() {
               </button>
             )}
 
-            {/* Header */}
-            <div style={{ display: "flex", justifyContent: "space-between" }}>
-              {editingId === p.id ? (
-                <input
-                  value={editName}
-                  autoFocus
-                  onChange={(e) => setEditName(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") saveEdit();
-                    if (e.key === "Escape") cancelEdit();
-                  }}
-                  onBlur={saveEdit}
-                />
-              ) : (
-                <span onClick={() => startEdit(p)}>
-                  {done && "👑 "}
-                  {p.name} • {score}/{states.length}
-                </span>
-              )}
-
-              {isMobile && (
-                <span onClick={() => toggleExpand(p.id)}>
-                  {isOpen ? "▲" : "▼"}
-                </span>
-              )}
+            <div>
+              {done && "👑 "}
+              {p.name} • {score}/{states.length}
             </div>
 
-            {/* Fortschrittsbalken */}
             <div style={{
               height: 8,
               background: "#334155",
@@ -328,29 +296,26 @@ export default function Home() {
               }} />
             </div>
 
-            {/* Checkboxen */}
-            {isOpen && (
-              <div style={{ marginTop: 8 }}>
-                {states.map((s, j) => (
-                  <label key={j} style={{
-                    marginRight: 8,
-                    background: p.progress[j] ? "#22c55e" : "#334155",
-                    padding: "4px 8px",
-                    borderRadius: 6,
-                    color: p.progress[j] ? "black" : "white"
-                  }}>
-                    <input
-                      type="checkbox"
-                      checked={p.progress[j]}
-                      disabled={!isAdmin}
-                      style={{ marginRight: 4, accentColor: "#22c55e" }}
-                      onChange={() => toggle(p.id, j)}
-                    />
-                    {s}
-                  </label>
-                ))}
-              </div>
-            )}
+            <div style={{ marginTop: 8 }}>
+              {states.map((s, j) => (
+                <label key={j} style={{
+                  marginRight: 8,
+                  background: p.progress[j] ? "#22c55e" : "#334155",
+                  padding: "4px 8px",
+                  borderRadius: 6,
+                  color: p.progress[j] ? "black" : "white"
+                }}>
+                  <input
+                    type="checkbox"
+                    checked={p.progress[j]}
+                    disabled={!isAdmin}
+                    style={{ marginRight: 4, accentColor: "#22c55e" }}
+                    onChange={() => toggle(p.id, j)}
+                  />
+                  {s}
+                </label>
+              ))}
+            </div>
           </div>
         );
       })}
