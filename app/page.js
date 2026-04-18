@@ -3,7 +3,13 @@
 import { onAuthStateChanged } from "firebase/auth";
 import { useEffect, useState, useMemo } from "react";
 import { db, auth } from "../utils/firebase";
-import { doc, onSnapshot, setDoc } from "firebase/firestore";
+import {
+  collection,
+  doc,
+  onSnapshot,
+  setDoc,
+  deleteDoc
+} from "firebase/firestore";
 
 const states = [
   "Burgenland","Kärnten","Niederösterreich","Oberösterreich",
@@ -39,13 +45,19 @@ export default function Home() {
     return () => window.removeEventListener("resize", check);
   }, []);
 
-  // 🔄 Firestore
+  // 🔄 Firestore (NEU!)
   useEffect(() => {
-    const unsub = onSnapshot(doc(db, "leaderboard", "data"), (snap) => {
-      if (snap.exists()) {
-        setPlayers(snap.data().players || []);
+    const unsub = onSnapshot(
+      collection(db, "leaderboard", "players"),
+      (snapshot) => {
+        const list = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+        setPlayers(list);
       }
-    });
+    );
+
     return () => unsub();
   }, []);
 
@@ -55,15 +67,7 @@ export default function Home() {
 
   const isAdmin = ADMIN_EMAILS.includes(user?.email);
 
-  const save = async (playersData) => {
-    await setDoc(
-      doc(db, "leaderboard", "data"),
-      { players: playersData },
-      { merge: true }
-    );
-  };
-
-  // ➕ Add
+  // ➕ Teilnehmer hinzufügen
   const addPlayer = async () => {
     if (!newName.trim()) {
       alert("Bitte Namen eingeben");
@@ -71,27 +75,31 @@ export default function Home() {
     }
 
     if (players.some(p => p.name.toLowerCase() === newName.toLowerCase())) {
-      alert("Spieler existiert bereits");
+      alert("Teilnehmer existiert bereits");
       return;
     }
 
-    const newPlayer = {
-      id: crypto.randomUUID(),
-      name: newName,
-      progress: Array(states.length).fill(false)
-    };
+    const newId = crypto.randomUUID();
 
-    await save([...players, newPlayer]);
+    await setDoc(
+      doc(db, "leaderboard", "players", newId),
+      {
+        name: newName,
+        progress: Array(states.length).fill(false)
+      }
+    );
+
     setNewName("");
   };
 
-  // ✏️ Edit
+  // ✏️ Edit starten
   const startEdit = (p) => {
     if (!isAdmin) return;
     setEditingId(p.id);
     setEditName(p.name);
   };
 
+  // 💾 Edit speichern
   const saveEdit = async () => {
     if (isSaving) return;
     if (!editName.trim()) return;
@@ -107,11 +115,11 @@ export default function Home() {
       return;
     }
 
-    const updated = players.map(p =>
-      p.id === editingId ? { ...p, name: editName } : p
+    await setDoc(
+      doc(db, "leaderboard", "players", editingId),
+      { name: editName },
+      { merge: true }
     );
-
-    await save(updated);
 
     setEditingId(null);
     setEditName("");
@@ -136,30 +144,32 @@ export default function Home() {
   };
 
   const handleDelete = async () => {
-    if (deleteId === null) return;
+    if (!deleteId) return;
 
-    const updated = players.filter(p => p.id !== deleteId);
-    await save(updated);
+    await deleteDoc(
+      doc(db, "leaderboard", "players", deleteId)
+    );
+
     setDeleteId(null);
   };
 
-  // ✅ Progress
-  const toggle = (id, j) => {
+  // ✅ Fortschritt
+  const toggle = async (id, j) => {
     if (!isAdmin) return;
 
-    const updated = players.map(p => {
-      if (p.id !== id) return p;
+    const player = players.find(p => p.id === id);
+    if (!player) return;
 
-      const copy = [...p.progress];
-      copy[j] = !copy[j];
+    const newProgress = [...player.progress];
+    newProgress[j] = !newProgress[j];
 
-      return { ...p, progress: copy };
-    });
-
-    save(updated);
+    await setDoc(
+      doc(db, "leaderboard", "players", id),
+      { progress: newProgress },
+      { merge: true }
+    );
   };
 
-  // 🔒 sicherer Score
   const getScore = (p) =>
     Array.isArray(p.progress)
       ? p.progress.filter(Boolean).length
@@ -224,8 +234,6 @@ export default function Home() {
             background: "#1e293b",
             borderRadius: 10
           }}>
-
-            {/* ❌ Delete oben rechts */}
             {isAdmin && (
               <button
                 onClick={() => confirmDelete(p.id)}
@@ -235,15 +243,13 @@ export default function Home() {
                   right: 5,
                   background: "transparent",
                   border: "none",
-                  color: "#f87171",
-                  cursor: "pointer"
+                  color: "#f87171"
                 }}
               >
                 ✕
               </button>
             )}
 
-            {/* Header */}
             <div style={{ display: "flex", justifyContent: "space-between" }}>
               {editingId === p.id ? (
                 <input
@@ -299,7 +305,7 @@ export default function Home() {
         );
       })}
 
-      {deleteId !== null && (
+      {deleteId && (
         <div>
           <p>{players.find(p => p.id === deleteId)?.name}</p>
           <button onClick={() => setDeleteId(null)}>Abbrechen</button>
