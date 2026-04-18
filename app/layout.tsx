@@ -13,8 +13,11 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  default: "RMR Challenge",
+  title: {
+    default: "RMR Challenge",
     template: "%s | RMR Challenge",
+  },
+  description: "Richimountain Runners Challenge",
 };
 
 export default function RootLayout({
