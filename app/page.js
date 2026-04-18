@@ -203,7 +203,8 @@ export default function Home() {
             {isAdmin && <span style={{ color: "#facc15" }}> 👑 Admin</span>}
           </div>
         ) : (
-          <div style={{ color: "#f87171" }}>❌ Nicht eingeloggt</div>
+ {/* Nicht eingeloggt */}          
+<div style={{ color: "white" }}>Statistik</div>
         )}
       </div>
 {user && (
@@ -228,9 +229,10 @@ export default function Home() {
       <div style={{ display: "flex", justifyContent: "center", gap: 30 }}>
         <div>👥 {totalPlayers}</div>
         <div>🏁 {finishedPlayers}</div>
+      {!user && <a href="/admin">Login</a>}
       </div>
 
-      {!user && <a href="/admin">Login</a>}
+
 
       {/* Add */}
       {isAdmin && (
