@@ -1,6 +1,6 @@
 "use client";
 
-import { onAuthStateChanged } from "firebase/auth";
+import { onAuthStateChanged, signOut } from "firebase/auth";
 import { useEffect, useState, useMemo } from "react";
 import { db, auth } from "../utils/firebase";
 import {
@@ -10,6 +10,7 @@ import {
   setDoc,
   deleteDoc
 } from "firebase/firestore";
+import { useRouter } from "next/navigation";
 
 const states = [
   "Burgenland","Kärnten","Niederösterreich","Oberösterreich",
@@ -205,6 +206,23 @@ export default function Home() {
           <div style={{ color: "#f87171" }}>❌ Nicht eingeloggt</div>
         )}
       </div>
+{user && (
+  <div style={{ textAlign: "center", marginBottom: 15 }}>
+    <button
+      onClick={() => signOut(auth)}
+      style={{
+        padding: "8px 14px",
+        borderRadius: 8,
+        border: "none",
+        background: "#ef4444",
+        color: "white",
+        cursor: "pointer"
+      }}
+    >
+      🚪 Logout
+    </button>
+  </div>
+)}
 
       {/* Stats */}
       <div style={{ display: "flex", justifyContent: "center", gap: 30 }}>
