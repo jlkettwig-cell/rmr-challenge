@@ -110,6 +110,12 @@ export default function Home() {
   const getScore = (p) => p.progress.filter(Boolean).length;
   const sorted = [...players].sort((a, b) => getScore(b) - getScore(a));
 
+  const totalPlayers = players.length;
+
+  const finishedPlayers = players.filter(
+  (p) => getScore(p) === states.length
+).length;
+
   return (
     <div style={{
       padding: 20,
@@ -119,6 +125,19 @@ export default function Home() {
       fontFamily: "Arial"
     }}>
       <h1 style={{ marginBottom: 10 }}>🏆 Richimountain Runners Challenge</h1>
+
+<div style={{
+  marginBottom: 20,
+  display: "flex",
+  justifyContent: "center",
+  gap: 30,
+  fontSize: 16,
+  fontWeight: "bold",
+  color: "#e2e8f0"
+}}>
+  <div>👥 {totalPlayers}</div>
+  <div>🏁 {finishedPlayers}</div>
+</div>
 
       {!user && <a href="/admin" style={{ color: "#f97316" }}>Login</a>}
 
