@@ -57,9 +57,11 @@ export default function Home() {
   const isAdmin = ADMIN_EMAILS.includes(user?.email);
 
   const save = async (playersData) => {
-    await setDoc(doc(db, "leaderboard", "data"), {
-      players: playersData
-    });
+   await setDoc(
+  doc(db, "leaderboard", "data"),
+  { players: playersData },
+  { merge: true }
+);
   };
 
   // ➕ Spieler hinzufügen
@@ -67,9 +69,10 @@ export default function Home() {
     if (!newName.trim()) return;
 
     const newPlayer = {
-      name: newName,
-      progress: Array(states.length).fill(false)
-    };
+  id: crypto.randomUUID(), // 🔥 eindeutige ID
+  name: newName,
+  progress: Array(states.length).fill(false)
+};
 
     await save([...players, newPlayer]);
     setNewName("");
@@ -88,24 +91,31 @@ export default function Home() {
   };
 
   // 🧹 Löschen ausführen
-  const handleDelete = async () => {
-    if (deleteIndex === null) return;
+  const confirmDelete = (playerId) => {
+  setDeleteIndex(playerId);
+};
 
-    const updated = players.filter((_, i) => i !== deleteIndex);
-    await save(updated);
-
-    setDeleteIndex(null);
-  };
+const handleDelete = async () => {
+  const updated = players.filter(p => p.id !== deleteIndex);
+  await save(updated);
+  setDeleteIndex(null);
+};
 
   // ✅ Checkbox toggle
-  const toggle = (i, j) => {
-    if (!isAdmin) return;
+  const toggle = (playerId, j) => {
+  if (!isAdmin) return;
 
-    const copy = [...players];
-    copy[i].progress[j] = !copy[i].progress[j];
+  const updated = players.map((p) => {
+    if (p.id !== playerId) return p;
 
-    save(copy);
-  };
+    const newProgress = [...p.progress];
+    newProgress[j] = !newProgress[j];
+
+    return { ...p, progress: newProgress };
+  });
+
+  save(updated);
+};
 
   const getScore = (p) => p.progress.filter(Boolean).length;
   const sorted = [...players].sort((a, b) => getScore(b) - getScore(a));
@@ -178,7 +188,7 @@ export default function Home() {
       )}
 
       {/* 🏆 Leaderboard */}
-      {sorted.map((p, i) => {
+      {sorted.map((p) => {
         const score = getScore(p);
         const done = score === states.length;
         const percent = (score / states.length) * 100;
@@ -245,7 +255,7 @@ export default function Home() {
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      confirmDelete(i);
+                      confirmDelete(p.id);
                     }}
                     style={{
                       position: "absolute",
@@ -278,7 +288,7 @@ export default function Home() {
                         disabled={!isAdmin}
                         onChange={(e) => {
                           e.stopPropagation();
-                          toggle(i, j);
+                          toggle(p.id, j);
                         }}
                         style={{ marginRight: 5 }}
                       />
