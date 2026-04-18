@@ -200,7 +200,7 @@ export default function Home() {
           <button
             onClick={async () => {
               await signOut(auth);
-              window.location.href = "/admin"; // ✅ sicher
+              window.location.href = "/"; // 🔥 zurück zur Startseite
             }}
             style={{
               padding: "8px 14px",
